@@ -184,7 +184,7 @@ namespace dxvk {
           if (m_mapMode != D3D11_COMMON_TEXTURE_MAP_MODE_DIRECT)
             m_buffers.push_back(CreateMappedBuffer(j));
 
-          m_mapInfo.push_back({ D3D11_MAP(~0u), 0ull });
+          m_mapInfo.push_back({ D3D11_MAP(~0u), StallTracker(), 0ull });
         }
       }
     }

@@ -5,6 +5,8 @@
 
 #include "../d3d10/d3d10_texture.h"
 
+#include "../util/util_misc.h"
+
 #include "d3d11_device_child.h"
 #include "d3d11_interfaces.h"
 #include "d3d11_resource.h"
@@ -264,6 +266,27 @@ namespace dxvk {
     }
 
     /**
+     * \brief Check whether a given subresource is marked as stalling
+     *
+     * \param [in] Subresource Subresource index
+     * \returns \c true if the given subresource stalls on mapping
+     */
+    bool IsStalling(UINT Subresource) const {
+      return Subresource < m_mapInfo.size() && m_mapInfo[Subresource].stall.isStalling();
+    }
+
+    /**
+     * \brief Marks the given subresource as stalling
+     *
+     * Should be called after WaitForResource stalled.
+     * \param [in] Subresource Subresource index
+     */
+    void NotifyStall(UINT Subresource) {
+      if (Subresource < m_mapInfo.size())
+        m_mapInfo[Subresource].stall.notifyStall();
+    }
+
+    /**
      * \brief Tracks sequence number for a given subresource
      *
      * Stores which CS chunk the resource was last used on.
@@ -271,8 +294,10 @@ namespace dxvk {
      * \param [in] Seq Sequence number
      */
     void TrackSequenceNumber(UINT Subresource, uint64_t Seq) {
-      if (Subresource < m_mapInfo.size())
+      if (Subresource < m_mapInfo.size() && m_mapInfo[Subresource].seq < Seq) {
         m_mapInfo[Subresource].seq = Seq;
+        m_mapInfo[Subresource].stall.notifyUse();
+      }
     }
 
     /**
@@ -381,6 +406,7 @@ namespace dxvk {
 
     struct MappedInfo {
       D3D11_MAP             mapType;
+      StallTracker          stall;
       uint64_t              seq;
     };
 

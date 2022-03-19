@@ -487,7 +487,12 @@ namespace dxvk {
         MapFlags &= ~D3D11_MAP_FLAG_DO_NOT_WAIT;
 
       if (MapType != D3D11_MAP_WRITE_NO_OVERWRITE) {
-        if (!WaitForResource(mappedImage, sequenceNumber, MapType, MapFlags))
+        D3D11_VK_WAIT_STATUS status = WaitForResource(mappedImage, sequenceNumber, MapType, MapFlags);
+
+        if (status == D3D11_VK_WAIT_READY_AFTER_STALL)
+          pResource->NotifyStall(Subresource);
+
+        if (status == D3D11_VK_WAIT_NOT_READY)
           return DXGI_ERROR_WAS_STILL_DRAWING;
       }
       
@@ -569,7 +574,12 @@ namespace dxvk {
             MapFlags &= ~D3D11_MAP_FLAG_DO_NOT_WAIT;
 
           // Wait for mapped buffer to become available
-          if (!WaitForResource(mappedBuffer, sequenceNumber, MapType, MapFlags))
+          D3D11_VK_WAIT_STATUS status = WaitForResource(mappedBuffer, sequenceNumber, MapType, MapFlags);
+
+          if (status == D3D11_VK_WAIT_READY_AFTER_STALL)
+            pResource->NotifyStall(Subresource);
+
+          if (status == D3D11_VK_WAIT_NOT_READY)
             return DXGI_ERROR_WAS_STILL_DRAWING;
         }
 
@@ -740,7 +750,8 @@ namespace dxvk {
     uint64_t sequenceNumber = GetCurrentSequenceNumber();
     pResource->TrackSequenceNumber(Subresource, sequenceNumber);
 
-    FlushImplicit(TRUE);
+    if (pResource->IsStalling(Subresource))
+      FlushImplicit(TRUE);
   }
 
 
