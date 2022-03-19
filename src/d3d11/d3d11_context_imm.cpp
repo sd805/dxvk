@@ -425,7 +425,12 @@ namespace dxvk {
         pMappedResource->DepthPitch = bufferSize;
         return S_OK;
       } else {
-        if (!WaitForResource(buffer, sequenceNumber, MapType, MapFlags))
+        D3D11_VK_WAIT_STATUS status = WaitForResource(buffer, sequenceNumber, MapType, MapFlags);
+
+        if (status == D3D11_VK_WAIT_READY_AFTER_STALL)
+          pResource->NotifyStall();
+
+        if (status == D3D11_VK_WAIT_NOT_READY)
           return DXGI_ERROR_WAS_STILL_DRAWING;
 
         DxvkBufferSliceHandle physSlice = pResource->GetMappedSlice();
@@ -744,7 +749,8 @@ namespace dxvk {
     uint64_t sequenceNumber = GetCurrentSequenceNumber();
     pResource->TrackSequenceNumber(sequenceNumber);
 
-    FlushImplicit(TRUE);
+    if (pResource->IsStalling())
+      FlushImplicit(TRUE);
   }
 
 

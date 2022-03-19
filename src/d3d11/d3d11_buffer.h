@@ -5,6 +5,8 @@
 
 #include "../d3d10/d3d10_buffer.h"
 
+#include "../util/util_misc.h"
+
 #include "d3d11_device_child.h"
 #include "d3d11_interfaces.h"
 #include "d3d11_resource.h"
@@ -118,6 +120,14 @@ namespace dxvk {
       return &m_d3d10;
     }
 
+    bool IsStalling() const {
+      return m_stall.isStalling();
+    }
+
+    void NotifyStall() {
+      m_stall.notifyStall();
+    }
+
     bool HasSequenceNumber() const {
       return m_mapMode != D3D11_COMMON_BUFFER_MAP_MODE_NONE
           && !(m_desc.MiscFlags & D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS)
@@ -125,7 +135,10 @@ namespace dxvk {
     }
 
     void TrackSequenceNumber(uint64_t Seq) {
-      m_seq = Seq;
+      if (m_seq < Seq) {
+        m_seq = Seq;
+        m_stall.notifyUse();
+      }
     }
 
     uint64_t GetSequenceNumber() {
@@ -151,6 +164,8 @@ namespace dxvk {
     Rc<DxvkBuffer>                m_soCounter;
     DxvkBufferSliceHandle         m_mapped;
     uint64_t                      m_seq = 0ull;
+
+    StallTracker                  m_stall;
 
     D3D11DXGIResource             m_resource;
     D3D10Buffer                   m_d3d10;
