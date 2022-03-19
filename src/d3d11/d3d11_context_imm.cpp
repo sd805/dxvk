@@ -682,7 +682,7 @@ namespace dxvk {
   }
   
   
-  bool D3D11ImmediateContext::WaitForResource(
+  D3D11_VK_WAIT_STATUS D3D11ImmediateContext::WaitForResource(
     const Rc<DxvkResource>&                 Resource,
           uint64_t                          SequenceNumber,
           D3D11_MAP                         MapType,
@@ -702,26 +702,24 @@ namespace dxvk {
       isInUse = Resource->isInUse(access);
     }
 
+    if (!isInUse)
+      return D3D11_VK_WAIT_READY;
+
     if (MapFlags & D3D11_MAP_FLAG_DO_NOT_WAIT) {
-      if (isInUse) {
-        // We don't have to wait, but misbehaving games may
-        // still try to spin on `Map` until the resource is
-        // idle, so we should flush pending commands
-        FlushImplicit(FALSE);
-        return false;
-      }
+      // We don't have to wait, but misbehaving games may
+      // still try to spin on `Map` until the resource is
+      // idle, so we should flush pending commands
+      FlushImplicit(FALSE);
+      return D3D11_VK_WAIT_NOT_READY;
     } else {
-      if (isInUse) {
-        // Make sure pending commands using the resource get
-        // executed on the the GPU if we have to wait for it
-        Flush();
-        SynchronizeCsThread(SequenceNumber);
+      // Make sure pending commands using the resource get
+      // executed on the the GPU if we have to wait for it
+      Flush();
+      SynchronizeCsThread(SequenceNumber);
 
-        m_device->waitForResource(Resource, access);
-      }
+      m_device->waitForResource(Resource, access);
+      return D3D11_VK_WAIT_READY_AFTER_STALL;
     }
-
-    return true;
   }
   
   

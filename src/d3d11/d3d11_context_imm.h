@@ -12,6 +12,12 @@ namespace dxvk {
   
   class D3D11Buffer;
   class D3D11CommonTexture;
+
+  enum D3D11_VK_WAIT_STATUS : uint32_t {
+    D3D11_VK_WAIT_NOT_READY         = 0,
+    D3D11_VK_WAIT_READY             = 1,
+    D3D11_VK_WAIT_READY_AFTER_STALL = 2,
+  };
   
   class D3D11ImmediateContext : public D3D11DeviceContext {
     friend class D3D11SwapChain;
@@ -159,7 +165,7 @@ namespace dxvk {
 
     void SynchronizeDevice();
     
-    bool WaitForResource(
+    D3D11_VK_WAIT_STATUS WaitForResource(
       const Rc<DxvkResource>&                 Resource,
             uint64_t                          SequenceNumber,
             D3D11_MAP                         MapType,
