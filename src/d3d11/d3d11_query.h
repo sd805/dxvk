@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../util/util_misc.h"
+
 #include "../dxvk/dxvk_gpu_event.h"
 #include "../dxvk/dxvk_gpu_query.h"
 
@@ -69,16 +71,15 @@ namespace dxvk {
     }
 
     bool IsStalling() const {
-      return m_stallFlag;
+      return m_stall.isStalling();
     }
 
     void NotifyEnd() {
-      m_stallMask <<= 1;
+      m_stall.notifyUse();
     }
 
     void NotifyStall() {
-      m_stallMask |= 1;
-      m_stallFlag |= bit::popcnt(m_stallMask) >= 16;
+      m_stall.notifyStall();
     }
     
     D3D10Query* GetD3D10Iface() {
@@ -102,14 +103,12 @@ namespace dxvk {
     D3D11_QUERY_DESC1  m_desc;
 
     D3D11_VK_QUERY_STATE m_state;
+    StallTracker         m_stall;
     
     std::array<Rc<DxvkGpuQuery>, MaxGpuQueries> m_query;
     std::array<Rc<DxvkGpuEvent>, MaxGpuEvents>  m_event;
 
     D3D10Query m_d3d10;
-
-    uint32_t m_stallMask = 0;
-    bool     m_stallFlag = false;
 
     std::atomic<uint32_t> m_resetCtr = { 0u };
 
