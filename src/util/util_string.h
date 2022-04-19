@@ -46,5 +46,11 @@ namespace dxvk::str {
     if (count > 0)
       dst[count - 1] = '\0';
   }
+
+  inline void wcslcpy(wchar_t* dst, const wchar_t* src, size_t count) {
+    std::wcsncpy(dst, src, count);
+    if (count > 0)
+      dst[count - 1] = '\0';
+  }
   
 }
