@@ -18,9 +18,12 @@ namespace dxvk {
     while (s_luids.size() < newLuidCount) {
       LUID luid = { 0, 0 };
 
+#ifdef _WIN32
       if (!::AllocateLocallyUniqueId(&luid))
         Logger::err("Failed to allocate LUID");
-      
+#else
+      luid.LowPart = newLuidCount;
+#endif
         
       Logger::info(str::format("Adapter LUID ", s_luids.size(), ": ",
         std::hex, luid.HighPart, ":", luid.LowPart, std::dec));
