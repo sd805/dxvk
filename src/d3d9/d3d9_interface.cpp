@@ -4,6 +4,9 @@
 #include "d3d9_caps.h"
 #include "d3d9_device.h"
 
+#include "openvr.h"
+#include "d3d9_vr.h"
+
 #include <algorithm>
 
 namespace dxvk {
@@ -237,7 +240,20 @@ namespace dxvk {
           DWORD                  BehaviorFlags,
           D3DPRESENT_PARAMETERS* pPresentationParameters,
           IDirect3DDevice9**     ppReturnedDeviceInterface) {
-    return this->CreateDeviceEx(
+    
+	  vr::HmdError error = vr::VRInitError_None;
+      vr::IVRSystem* system = vr::VR_Init(&error, vr::VRApplication_Scene);
+
+      if (error == vr::VRInitError_None) 
+      {
+		  // Override viewport size
+          uint32_t renderWidth, renderHeight;
+          system->GetRecommendedRenderTargetSize(&renderWidth, &renderHeight);
+          pPresentationParameters->BackBufferWidth = renderWidth;
+          pPresentationParameters->BackBufferHeight = renderHeight;
+      }
+	
+	auto result = return this->CreateDeviceEx(
       Adapter,
       DeviceType,
       hFocusWindow,
@@ -245,6 +261,10 @@ namespace dxvk {
       pPresentationParameters,
       nullptr, // <-- pFullscreenDisplayMode
       reinterpret_cast<IDirect3DDevice9Ex**>(ppReturnedDeviceInterface));
+	  
+	  Direct3DCreateVRImpl(*ppReturnedDeviceInterface, &g_D3DVR9);
+	  
+	  return result;
   }
 
 
