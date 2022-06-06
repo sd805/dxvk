@@ -24,6 +24,10 @@
 
 #include "d3d9_initializer.h"
 
+#include "L4D2VR/game.h"
+#include "L4D2VR/vr.h"
+#include "d3d9_vr.h"
+
 #include <algorithm>
 #include <cfloat>
 #ifdef MSC_VER
@@ -478,6 +482,36 @@ namespace dxvk {
 
       m_initializer->InitTexture(texture->GetCommonTexture(), initialData);
       *ppTexture = texture.ref();
+
+      if (g_Game && g_Game->m_VR && g_Game->m_VR->m_CreatingTextureID != -1)
+      {
+          vr::VRVulkanTextureData_t vulkanData;
+          vr::VRVulkanTextureData_t vulkanData2;
+          memset(&vulkanData, 0, sizeof(vr::VRVulkanTextureData_t));
+
+          SharedTextureHolder *textureTarget;
+          D3D9_TEXTURE_VR_DESC texDesc;
+          int texID = g_Game->m_VR->m_CreatingTextureID;
+
+          if (texID % 2 == 0)
+          {
+              textureTarget = &g_Game->m_VR->m_VKLeftEye;
+              texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9LeftEyeSurface);
+              g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9LeftEyeSurface, &texDesc);
+          }
+          else if (texID % 2 == 1)
+          {
+              textureTarget = &g_Game->m_VR->m_VKRightEye;
+              texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9RightEyeSurface);
+              g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9RightEyeSurface, &texDesc);
+          }
+
+          memcpy(&textureTarget->m_VulkanData, &texDesc, sizeof(vr::VRVulkanTextureData_t));
+          textureTarget->m_VRTexture.handle = &textureTarget->m_VulkanData;
+          textureTarget->m_VRTexture.eColorSpace = vr::ColorSpace_Auto;
+          textureTarget->m_VRTexture.eType = vr::TextureType_Vulkan;
+            
+      }
 
       return D3D_OK;
     }
@@ -3453,12 +3487,22 @@ namespace dxvk {
           HWND hDestWindowOverride,
     const RGNDATA* pDirtyRegion,
           DWORD dwFlags) {
-    return m_implicitSwapchain->Present(
+    
+	HRESULT result = m_implicitSwapchain->Present(
       pSourceRect,
       pDestRect,
       hDestWindowOverride,
       pDirtyRegion,
       dwFlags);
+	  
+	g_D3DVR9->WaitDeviceIdle();
+    
+    if (g_Game && g_Game->m_VR)
+    {
+        g_Game->m_VR->Update();
+    }
+	  
+	return result;
   }
 
 
