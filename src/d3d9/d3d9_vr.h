@@ -7,7 +7,7 @@
 #undef VK_USE_PLATFORM_WIN32_KHR
 
 class IDirect3DVR9;
-inline IDirect3DVR9 *g_3DVR9;
+inline IDirect3DVR9 *g_D3DVR9;
 
 struct D3D9_TEXTURE_VR_DESC {
     uint64_t         Image;

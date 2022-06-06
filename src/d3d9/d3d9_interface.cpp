@@ -241,7 +241,7 @@ namespace dxvk {
           D3DPRESENT_PARAMETERS* pPresentationParameters,
           IDirect3DDevice9**     ppReturnedDeviceInterface) {
     
-	  vr::HmdError error = vr::VRInitError_None;
+	vr::HmdError error = vr::VRInitError_None;
     vr::IVRSystem* system = vr::VR_Init(&error, vr::VRApplication_Scene);
 
     if (error == vr::VRInitError_None) 
@@ -253,18 +253,18 @@ namespace dxvk {
         pPresentationParameters->BackBufferHeight = renderHeight;
     }
 	
-	  auto result = return this->CreateDeviceEx(
-      Adapter,
-      DeviceType,
-      hFocusWindow,
-      BehaviorFlags,
-      pPresentationParameters,
-      nullptr, // <-- pFullscreenDisplayMode
-      reinterpret_cast<IDirect3DDevice9Ex**>(ppReturnedDeviceInterface));
+	auto result = this->CreateDeviceEx(
+        Adapter,
+        DeviceType,
+        hFocusWindow,
+        BehaviorFlags,
+        pPresentationParameters,
+        nullptr, // <-- pFullscreenDisplayMode
+        reinterpret_cast<IDirect3DDevice9Ex**>(ppReturnedDeviceInterface));
 	  
-	  Direct3DCreateVRImpl(*ppReturnedDeviceInterface, &g_D3DVR9);
+	Direct3DCreateVRImpl(*ppReturnedDeviceInterface, &g_D3DVR9);
 	  
-	  return result;
+	return result;
   }
 
 
