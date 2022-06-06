@@ -3488,21 +3488,21 @@ namespace dxvk {
     const RGNDATA* pDirtyRegion,
           DWORD dwFlags) {
     
-	HRESULT result = m_implicitSwapchain->Present(
+	  HRESULT result = m_implicitSwapchain->Present(
       pSourceRect,
       pDestRect,
       hDestWindowOverride,
       pDirtyRegion,
       dwFlags);
 	  
-	g_D3DVR9->WaitDeviceIdle();
+	  g_D3DVR9->WaitDeviceIdle();
     
     if (g_Game && g_Game->m_VR)
     {
         g_Game->m_VR->Update();
     }
 	  
-	return result;
+	  return result;
   }
 
 

@@ -242,18 +242,18 @@ namespace dxvk {
           IDirect3DDevice9**     ppReturnedDeviceInterface) {
     
 	  vr::HmdError error = vr::VRInitError_None;
-      vr::IVRSystem* system = vr::VR_Init(&error, vr::VRApplication_Scene);
+    vr::IVRSystem* system = vr::VR_Init(&error, vr::VRApplication_Scene);
 
-      if (error == vr::VRInitError_None) 
-      {
-		  // Override viewport size
-          uint32_t renderWidth, renderHeight;
-          system->GetRecommendedRenderTargetSize(&renderWidth, &renderHeight);
-          pPresentationParameters->BackBufferWidth = renderWidth;
-          pPresentationParameters->BackBufferHeight = renderHeight;
-      }
+    if (error == vr::VRInitError_None) 
+    {
+        // Override viewport size
+        uint32_t renderWidth, renderHeight;
+        system->GetRecommendedRenderTargetSize(&renderWidth, &renderHeight);
+        pPresentationParameters->BackBufferWidth = renderWidth;
+        pPresentationParameters->BackBufferHeight = renderHeight;
+    }
 	
-	auto result = return this->CreateDeviceEx(
+	  auto result = return this->CreateDeviceEx(
       Adapter,
       DeviceType,
       hFocusWindow,

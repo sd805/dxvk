@@ -1,5 +1,9 @@
 # DXVK
 
+Slightly modified for L4D2VR.
+
+Thanks to [TheIronWolfModding](https://github.com/TheIronWolfModding/dxvk/tree/vr-dx9-rel) and [DrBeef](https://github.com/DrBeef/dxvk)
+
 A Vulkan-based translation layer for Direct3D 9/10/11 which allows running 3D applications on Linux using Wine.
 
 For the current status of the project, please refer to the [project wiki](https://github.com/doitsujin/dxvk/wiki).
