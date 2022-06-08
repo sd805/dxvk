@@ -252,6 +252,13 @@ namespace dxvk {
         pPresentationParameters->BackBufferWidth = renderWidth;
         pPresentationParameters->BackBufferHeight = renderHeight;
     }
+    else
+    {
+        char errorString[256];
+        snprintf(errorString, 256, "VR_Init failed: %s", vr::VR_GetVRInitErrorAsEnglishDescription(error));
+        MessageBox(0, errorString, "DXVK", MB_ICONERROR | MB_OK);
+        ExitProcess(0);
+    }
 	
 	auto result = this->CreateDeviceEx(
         Adapter,
