@@ -1639,6 +1639,15 @@ namespace dxvk {
 
 
   HRESULT STDMETHODCALLTYPE D3D9DeviceEx::SetViewport(const D3DVIEWPORT9* pViewport) {
+    
+     // TODO: Overriding the viewport in-game will mess up the shadows, so only do it in the menu for now.
+    if (g_Game && !g_Game->m_EngineClient->IsInGame())
+    {
+        D3DVIEWPORT9 *newViewport = const_cast<D3DVIEWPORT9 *>(pViewport);
+        newViewport->Width = g_Game->m_VR->m_RenderWidth;
+        newViewport->Height = g_Game->m_VR->m_RenderHeight;
+    }
+      
     D3D9DeviceLock lock = LockDevice();
 
     if (unlikely(ShouldRecord()))
