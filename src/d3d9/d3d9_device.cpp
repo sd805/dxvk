@@ -359,6 +359,12 @@ namespace dxvk {
 
 
   HRESULT STDMETHODCALLTYPE D3D9DeviceEx::Reset(D3DPRESENT_PARAMETERS* pPresentationParameters) {
+    if (g_Game && g_Game->m_VR)
+    {
+        pPresentationParameters->BackBufferWidth = g_Game->m_VR->m_RenderWidth;
+        pPresentationParameters->BackBufferHeight = g_Game->m_VR->m_RenderHeight;
+    }
+
     D3D9DeviceLock lock = LockDevice();
 
     HRESULT hr = ResetSwapChain(pPresentationParameters, nullptr);
