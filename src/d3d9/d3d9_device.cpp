@@ -26,6 +26,7 @@
 
 #include "L4D2VR/game.h"
 #include "L4D2VR/vr.h"
+#include "L4D2VR/sdk/sdk.h"
 #include "d3d9_vr.h"
 
 #include <algorithm>
