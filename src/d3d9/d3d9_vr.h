@@ -7,6 +7,8 @@
 #undef VK_USE_PLATFORM_WIN32_KHR
 
 class IDirect3DVR9;
+class D3D9DeviceEx;
+class SharedTextureHolder;
 inline IDirect3DVR9 *g_D3DVR9;
 
 struct D3D9_TEXTURE_VR_DESC {
@@ -30,6 +32,7 @@ IDirect3DVR9 : public IUnknown{
   virtual HRESULT STDMETHODCALLTYPE LockDevice() = 0;
   virtual HRESULT STDMETHODCALLTYPE UnlockDevice() = 0;
   virtual HRESULT STDMETHODCALLTYPE WaitDeviceIdle() = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetBackBufferData(SharedTextureHolder *backBufferData) = 0;
 };
 
 #ifdef _MSC_VER
