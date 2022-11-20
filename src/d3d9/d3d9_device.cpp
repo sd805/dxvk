@@ -500,17 +500,23 @@ namespace dxvk {
           D3D9_TEXTURE_VR_DESC texDesc;
           int texID = g_Game->m_VR->m_CreatingTextureID;
 
-          if (texID % 2 == 0)
+          if (texID == 0)
           {
               textureTarget = &g_Game->m_VR->m_VKLeftEye;
               texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9LeftEyeSurface);
               g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9LeftEyeSurface, &texDesc);
           }
-          else if (texID % 2 == 1)
+          else if (texID == 1)
           {
               textureTarget = &g_Game->m_VR->m_VKRightEye;
               texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9RightEyeSurface);
               g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9RightEyeSurface, &texDesc);
+          }
+          else if (texID == 2)
+          {
+              textureTarget = &g_Game->m_VR->m_VKHUD;
+              texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9HUDSurface);
+              g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9HUDSurface, &texDesc);
           }
 
           memcpy(&textureTarget->m_VulkanData, &texDesc, sizeof(vr::VRVulkanTextureData_t));
