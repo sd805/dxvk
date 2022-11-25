@@ -490,40 +490,44 @@ namespace dxvk {
       m_initializer->InitTexture(texture->GetCommonTexture(), initialData);
       *ppTexture = texture.ref();
 
-      if (g_Game && g_Game->m_VR && g_Game->m_VR->m_CreatingTextureID != -1)
+      if (g_Game && g_Game->m_VR && g_Game->m_VR->m_CreatingTextureID != VR::Texture_None)
       {
           vr::VRVulkanTextureData_t vulkanData;
-          vr::VRVulkanTextureData_t vulkanData2;
           memset(&vulkanData, 0, sizeof(vr::VRVulkanTextureData_t));
 
           SharedTextureHolder *textureTarget;
           D3D9_TEXTURE_VR_DESC texDesc;
-          int texID = g_Game->m_VR->m_CreatingTextureID;
+          VR::TextureID texID = g_Game->m_VR->m_CreatingTextureID;
 
-          if (texID == 0)
+          if (texID == VR::Texture_LeftEye)
           {
               textureTarget = &g_Game->m_VR->m_VKLeftEye;
               texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9LeftEyeSurface);
               g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9LeftEyeSurface, &texDesc);
           }
-          else if (texID == 1)
+          else if (texID == VR::Texture_RightEye)
           {
               textureTarget = &g_Game->m_VR->m_VKRightEye;
               texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9RightEyeSurface);
               g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9RightEyeSurface, &texDesc);
           }
-          else if (texID == 2)
+          else if (texID == VR::Texture_HUD)
           {
               textureTarget = &g_Game->m_VR->m_VKHUD;
               texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9HUDSurface);
               g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9HUDSurface, &texDesc);
+          }
+          else if (texID == VR::Texture_Blank)
+          {
+              textureTarget = &g_Game->m_VR->m_VKBlankTexture;
+              texture.ref()->GetSurfaceLevel(0, &g_Game->m_VR->m_D9BlankSurface);
+              g_D3DVR9->GetVRDesc(g_Game->m_VR->m_D9BlankSurface, &texDesc);
           }
 
           memcpy(&textureTarget->m_VulkanData, &texDesc, sizeof(vr::VRVulkanTextureData_t));
           textureTarget->m_VRTexture.handle = &textureTarget->m_VulkanData;
           textureTarget->m_VRTexture.eColorSpace = vr::ColorSpace_Auto;
           textureTarget->m_VRTexture.eType = vr::TextureType_Vulkan;
-            
       }
 
       return D3D_OK;
