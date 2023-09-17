@@ -1141,6 +1141,8 @@ namespace dxvk {
 
     uint64_t GetCurrentSequenceNumber();
 
+    void ResolveImage(D3D9CommonTexture* commonTex);
+
     Com<D3D9InterfaceEx>            m_parent;
     D3DDEVTYPE                      m_deviceType;
     HWND                            m_window;
