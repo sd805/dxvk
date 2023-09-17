@@ -536,7 +536,8 @@ namespace dxvk {
           UINT                   Layer,
           UINT                   Lod,
           VkImageUsageFlags      UsageFlags,
-          bool                   Srgb) {    
+          bool                   Srgb,
+          bool                   Resolved) {
     DxvkImageViewCreateInfo viewInfo;
     viewInfo.format    = m_mapping.ConversionFormatInfo.FormatColor != VK_FORMAT_UNDEFINED
                        ? PickSRGB(m_mapping.ConversionFormatInfo.FormatColor, m_mapping.ConversionFormatInfo.FormatSrgb, Srgb)
@@ -565,7 +566,7 @@ namespace dxvk {
                            VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY };
 
     // Create the underlying image view object
-    return m_device->GetDXVKDevice()->createImageView(GetImage(), viewInfo);
+    return m_device->GetDXVKDevice()->createImageView(Resolved ? GetResolveImage() : GetImage(), viewInfo);
   }
 
 

@@ -35,6 +35,26 @@
 #pragma fenv_access (on)
 #endif
 
+namespace
+{
+	D3DMULTISAMPLE_TYPE MapToMultisampleType(int numSamples)
+	{
+		switch (numSamples)
+		{
+		case 16:
+            return D3DMULTISAMPLE_16_SAMPLES;
+		case 8:
+            return D3DMULTISAMPLE_8_SAMPLES;
+		case 4:
+            return D3DMULTISAMPLE_4_SAMPLES;
+		case 2:
+            return D3DMULTISAMPLE_2_SAMPLES;
+		default:
+            return D3DMULTISAMPLE_NONE;
+		}
+	}
+}
+
 namespace dxvk {
 
   D3D9DeviceEx::D3D9DeviceEx(
@@ -470,6 +490,12 @@ namespace dxvk {
     desc.MultisampleQuality = 0;
     desc.IsBackBuffer       = FALSE;
     desc.IsAttachmentOnly   = FALSE;
+
+	if (g_Game && g_Game->m_VR && (g_Game->m_VR->m_CreatingTextureID == VR::Texture_LeftEye || g_Game->m_VR->m_CreatingTextureID == VR::Texture_RightEye))
+	{
+        dxvk::Logger::info(str::format("Creating texture with MSAA ", g_Game->m_VR->m_AntiAliasing));
+		desc.MultiSample = MapToMultisampleType(g_Game->m_VR->m_AntiAliasing);
+	}
 
     if (FAILED(D3D9CommonTexture::NormalizeTextureProperties(this, &desc)))
       return D3DERR_INVALIDCALL;
@@ -3655,6 +3681,12 @@ namespace dxvk {
     desc.IsBackBuffer       = FALSE;
     desc.IsAttachmentOnly   = TRUE;
 
+	if (g_Game && g_Game->m_VR && (g_Game->m_VR->m_CreatingTextureID == VR::Texture_LeftEye || g_Game->m_VR->m_CreatingTextureID == VR::Texture_RightEye))
+	{
+        dxvk::Logger::info(str::format("Creating depth/stencil surface with MSAA ", g_Game->m_VR->m_AntiAliasing));
+		desc.MultiSample = MapToMultisampleType(g_Game->m_VR->m_AntiAliasing);
+	}
+
     if (FAILED(D3D9CommonTexture::NormalizeTextureProperties(this, &desc)))
       return D3DERR_INVALIDCALL;
 
@@ -6064,9 +6096,41 @@ namespace dxvk {
     D3D9CommonTexture* commonTex =
       GetCommonTexture(m_state.textures[StateSampler]);
 
+    auto imageView = commonTex->GetSampleView(srgb);
+
+    auto image = commonTex->GetImage();
+
+    // Can only bind a non-multisampled texture.
+    // otherwise we need to resolve.
+    bool needsResolve = image != nullptr && image->info().sampleCount != VK_SAMPLE_COUNT_1_BIT;
+
+    if (needsResolve) {
+      const DxvkFormatInfo* formatInfo = imageFormatInfo(image->info().format);
+      const VkImageSubresource subresource = commonTex->GetSubresourceFromIndex(formatInfo->aspectMask, 0);
+      VkImageResolve region;
+      region.srcSubresource = {subresource.aspectMask, subresource.mipLevel,
+          subresource.arrayLayer, 1};
+      region.srcOffset = {0, 0, 0};
+      region.dstSubresource = region.srcSubresource;
+      region.dstOffset = {0, 0, 0};
+      region.extent = image->info().extent;
+
+      EmitCs([cDstImage = commonTex->GetResolveImage(), cSrcImage = image,
+                 cRegion = region](DxvkContext *ctx) {
+        if (cRegion.srcSubresource.aspectMask !=
+            (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)) {
+          ctx->resolveImage(cDstImage, cSrcImage, cRegion, VK_FORMAT_UNDEFINED);
+        } else {
+          ctx->resolveDepthStencilImage(cDstImage, cSrcImage, cRegion,
+              VK_RESOLVE_MODE_AVERAGE_BIT_KHR, VK_RESOLVE_MODE_AVERAGE_BIT_KHR);
+        }
+      });
+      imageView = commonTex->GetResolveView(srgb);
+    }
+
     EmitCs([
       cSlot = slot,
-      cImageView = commonTex->GetSampleView(srgb)
+      cImageView = imageView
     ](DxvkContext* ctx) {
       ctx->bindResourceView(cSlot, cImageView, nullptr);
     });

@@ -135,8 +135,12 @@ namespace dxvk {
      * \returns An image with identical info, but 1 sample
      */
     const Rc<DxvkImage>& GetResolveImage() {
-      if (unlikely(m_resolveImage == nullptr))
+      if (unlikely(m_resolveImage == nullptr)) {
         m_resolveImage = CreateResolveImage();
+        m_resolveView.Color = CreateView(AllLayers, 0, VK_IMAGE_USAGE_SAMPLED_BIT, false, true);
+        if (IsSrgbCompatible())
+          m_resolveView.Srgb = CreateView(AllLayers, 0, VK_IMAGE_USAGE_SAMPLED_BIT, true, true);
+      }
 
       return m_resolveImage;
     }
@@ -341,6 +345,10 @@ namespace dxvk {
       return m_sampleView.Pick(srgb && IsSrgbCompatible());
     }
 
+    const Rc<DxvkImageView>& GetResolveView(bool srgb) const {
+      return m_resolveView.Pick(srgb && IsSrgbCompatible());
+    }
+
     VkImageLayout DetermineRenderTargetLayout() const {
       return m_image != nullptr &&
              m_image->info().tiling == VK_IMAGE_TILING_OPTIMAL &&
@@ -368,7 +376,8 @@ namespace dxvk {
             UINT                   Layer,
             UINT                   Lod,
             VkImageUsageFlags      UsageFlags,
-            bool                   Srgb);
+            bool                   Srgb,
+            bool                   Resolved = false);
     D3D9SubresourceBitset& GetUploadBitmask() { return m_needsUpload; }
 
     void SetAllNeedUpload() {
@@ -489,6 +498,7 @@ namespace dxvk {
     bool                          m_hazardous = false;
 
     D3D9ColorView                 m_sampleView;
+    D3D9ColorView                 m_resolveView;
 
     D3D9SubresourceBitset         m_locked = { };
 
