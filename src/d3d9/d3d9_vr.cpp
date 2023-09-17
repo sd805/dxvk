@@ -52,7 +52,7 @@ namespace dxvk {
             const auto *tex = surface->GetCommonTexture();
 
             const auto &desc = tex->Desc();
-            const auto &image = tex->GetImage();
+            const auto &image = desc->MultiSample != D3DMULTISAMPLE_NONE ? const_cast<D3D9CommonTexture*>(tex)->GetResolveImage() : tex->GetImage();
             const auto &device = tex->Device()->GetDXVKDevice();
 
             // I don't know why the image randomly is a uint64_t in OpenVR.

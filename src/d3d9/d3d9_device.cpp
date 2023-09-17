@@ -3546,6 +3546,11 @@ namespace dxvk {
     hDestWindowOverride,
     pDirtyRegion,
     dwFlags);
+
+    if (g_Game && g_Game->m_VR && g_Game->m_VR->m_CreatedVRTextures) {
+      ResolveImage(GetCommonTexture(g_Game->m_VR->m_D9LeftEyeSurface));
+      ResolveImage(GetCommonTexture(g_Game->m_VR->m_D9RightEyeSurface));
+    }
 	  
 	g_D3DVR9->WaitDeviceIdle();
     
@@ -6105,26 +6110,7 @@ namespace dxvk {
     bool needsResolve = image != nullptr && image->info().sampleCount != VK_SAMPLE_COUNT_1_BIT;
 
     if (needsResolve) {
-      const DxvkFormatInfo* formatInfo = imageFormatInfo(image->info().format);
-      const VkImageSubresource subresource = commonTex->GetSubresourceFromIndex(formatInfo->aspectMask, 0);
-      VkImageResolve region;
-      region.srcSubresource = {subresource.aspectMask, subresource.mipLevel,
-          subresource.arrayLayer, 1};
-      region.srcOffset = {0, 0, 0};
-      region.dstSubresource = region.srcSubresource;
-      region.dstOffset = {0, 0, 0};
-      region.extent = image->info().extent;
-
-      EmitCs([cDstImage = commonTex->GetResolveImage(), cSrcImage = image,
-                 cRegion = region](DxvkContext *ctx) {
-        if (cRegion.srcSubresource.aspectMask !=
-            (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)) {
-          ctx->resolveImage(cDstImage, cSrcImage, cRegion, VK_FORMAT_UNDEFINED);
-        } else {
-          ctx->resolveDepthStencilImage(cDstImage, cSrcImage, cRegion,
-              VK_RESOLVE_MODE_AVERAGE_BIT_KHR, VK_RESOLVE_MODE_AVERAGE_BIT_KHR);
-        }
-      });
+      ResolveImage(commonTex);
       imageView = commonTex->GetResolveView(srgb);
     }
 
@@ -7530,4 +7516,31 @@ namespace dxvk {
     return m_csChunk->empty() ? m_csSeqNum : m_csSeqNum + 1;
   }
 
+  void D3D9DeviceEx::ResolveImage(D3D9CommonTexture* commonTex) {
+    auto image = commonTex->GetImage();
+    bool needsResolve = image != nullptr && image->info().sampleCount != VK_SAMPLE_COUNT_1_BIT;
+
+    if (needsResolve) {
+      const DxvkFormatInfo* formatInfo = imageFormatInfo(image->info().format);
+      const VkImageSubresource subresource = commonTex->GetSubresourceFromIndex(formatInfo->aspectMask, 0);
+      VkImageResolve region;
+      region.srcSubresource = {subresource.aspectMask, subresource.mipLevel,
+          subresource.arrayLayer, 1};
+      region.srcOffset = {0, 0, 0};
+      region.dstSubresource = region.srcSubresource;
+      region.dstOffset = {0, 0, 0};
+      region.extent = image->info().extent;
+
+      EmitCs([cDstImage = commonTex->GetResolveImage(), cSrcImage = image,
+                 cRegion = region](DxvkContext *ctx) {
+        if (cRegion.srcSubresource.aspectMask !=
+            (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)) {
+          ctx->resolveImage(cDstImage, cSrcImage, cRegion, VK_FORMAT_UNDEFINED);
+        } else {
+          ctx->resolveDepthStencilImage(cDstImage, cSrcImage, cRegion,
+              VK_RESOLVE_MODE_AVERAGE_BIT_KHR, VK_RESOLVE_MODE_AVERAGE_BIT_KHR);
+        }
+      });
+    }
+  }
 }
